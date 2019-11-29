@@ -15,7 +15,7 @@ struct ContentView: View {
     
     @State private var rootWord = ""
     @State private var newWord = ""
-    @State private var usedWords = [""]
+    @State private var usedWords = [String]()
     
     var body: some View {
         NavigationView {
@@ -23,7 +23,16 @@ struct ContentView: View {
                 
                 TextField("Find possible words..", text: $newWord) {
                     
-                    if self.isRepeated(word: self.newWord){
+                    if !self.isPossible(word: self.newWord){
+                        //Title and message for he alert depending on the putput of the isRepeated function
+                        self.alertMEssage = "You Gotta use letters from that word in the title. Dont try to be slick"
+                        self.alertTitle = "Invalid Letters."
+                        
+                        //Toggling the alert state variable
+                        self.showAlert.toggle()
+                        self.newWord = ""
+                    }
+                    else if self.isRepeated(word: self.newWord){
                         //Title and message for he alert depending on the putput of the isRepeated function
                         self.alertMEssage = "This word already exist in the list. Choose a different one"
                         self.alertTitle = "Already Exist"
@@ -32,8 +41,18 @@ struct ContentView: View {
                         self.showAlert.toggle()
                         self.newWord = ""
                         
-                    }else{
+                    }
+                    else if !self.makesSense(word: self.newWord){
+                        self.alertMEssage = "Wth did you try to say here? This word doesnt exist"
+                        self.alertTitle = "Invalid Word.."
+                        
+                        //Toggling the alert state variable
+                        self.showAlert.toggle()
+                        self.newWord = ""
+                    }
+                    else{
                         self.addWord(word: self.newWord)
+                        self.newWord = ""
                     }
                     
                     
@@ -42,10 +61,12 @@ struct ContentView: View {
                 .autocapitalization(.none)
                 
                 List(usedWords, id: \.self){
-                    Text($0)
+                    Image(systemName: "\($0.count).circle")
+                        Text($0)
                 }
+                    
                 .alert(isPresented: $showAlert) { () -> Alert in
-                    Alert(title: Text(alertTitle), message: Text(alertMEssage), dismissButton: .default(Text("Ok")))
+                    Alert(title: Text(alertTitle), message: Text(alertMEssage))
                 }
             }
             .navigationBarTitle(rootWord)
@@ -57,7 +78,7 @@ struct ContentView: View {
         }
     }
     
-    //Checks whether or not the file is found and if its data can be read. Assigs all the values found inside the text file inside an array
+    //Checks whether or not the file is found and if its data can be read. Assigs all the values found inside the text file inside athe root word variable
     func readWord() -> (Bool){
         if let fileURL = Bundle.main.url(forResource: "start", withExtension: "txt"){
             if let fileContent = try? String(contentsOf: fileURL){
@@ -68,7 +89,33 @@ struct ContentView: View {
         return false
     }
     
+    func isPossible(word: String) -> Bool{
+        var tempWord = rootWord
+        
+        for letter in word {
+            if let possible = tempWord.firstIndex(of: letter){
+                tempWord.remove(at: possible)
+            }else{
+                return false
+            }
+        }
+        return true
+    }
     
+    func makesSense(word: String) -> (Bool) {
+        let checker = UITextChecker()
+        let range = NSRange(location: 0, length: word.utf16.count)
+        
+        let mispelledWords = checker.rangeOfMisspelledWord(in: word, range: range, startingAt: 0, wrap: false, language: "en")
+        
+        return mispelledWords.location == NSNotFound ? true : false
+    }
+    
+    func validLetter(word: String) -> Bool{
+        
+        
+        return true
+    }
     
     
     func isRepeated(word: String) -> (Bool){
