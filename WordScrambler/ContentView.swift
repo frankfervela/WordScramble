@@ -9,6 +9,7 @@
 import SwiftUI
 
 struct ContentView: View {
+    //MARK: - Variables and states
     @State private var showAlert = false
     @State private var alertTitle = ""
     @State private var alertMEssage = ""
@@ -25,51 +26,74 @@ struct ContentView: View {
     
     @State private var timeRanOut = false
     @State private var startCountDown = false
-    @State private var bgColors = calculateRGB(red: 235, green: 150, blue: 200)
+    @State private var buttonBackground = calculateRGB(red: 235, green: 110, blue: 200)
+    @State private var backgroundColor = calculateRGB(red: 235, green: 120, blue: 100)
+    @State private var secondBackgroundColor = calculateRGB(red: 200, green: 130, blue: 200)
     
     
+    //MARK: - View
     var body: some View {
         NavigationView {
             ZStack {
                 VStack {
                     //MARK: - Welcome Screen
                     if pausedGame && !gameStarted{
-                        Button(action: {
-                            self.restartGame()
-                            self.pausedGame = false
-                        }, label: {
-                            Text("Play")
-                                .frame(width: 200)
-                                .padding()
-                                .font(.system(size: 40))
-                                .foregroundColor(.white)
-                                .background(Color(red: bgColors[0], green: bgColors[1], blue: bgColors[2]))
-                                .clipShape(Capsule())
-                                .overlay(Capsule().stroke(Color(.white), lineWidth: 3))
-                                .shadow(color: .black, radius: 5)
+                        
+                        ZStack {
+                            RadialGradient(gradient: Gradient(colors: [.white, secondBackgroundColor]), center: .center, startRadius: 100, endRadius: 500).edgesIgnoringSafeArea(.all)
                             
-                        }).padding(.bottom, 60)
+                            Image("logopng")
+                                .resizable()
+                                .frame(width: 250, height: 100, alignment: .center)
+                                .offset(y: -90)
+                                
+                            
+                            Button(action: {
+                                self.restartGame()
+                                self.pausedGame = false
+                            }, label: {
+                                Text("Play 🥥")
+                                    .frame(width: 200)
+                                    .padding()
+                                    .font(.system(size: 40))
+                                    .foregroundColor(.white)
+                                    .background(buttonBackground)
+                                    .clipShape(Capsule())
+                                    .overlay(Capsule().stroke(Color(.white), lineWidth: 3))
+                                    .shadow(color: buttonBackground, radius: 10)
+                                
+                            })
+                                .offset(y: 100)
+                        }
+                        
+                        
                     }
                     
                     
                     //MARK: - Game Screen
                     if gameStarted && !pausedGame{
-                        TextField("Find possible words..", text: $newWord) {
+                        ZStack {
                             
-                            self.validateInput(input: self.newWord)
+                            secondBackgroundColor.edgesIgnoringSafeArea(.all)
                             
+                            VStack {
+                                TextField("Find possible words..", text: $newWord) {
+                                    self.validateInput(input: self.newWord)
+                                }
+                                .padding()
+                                .autocapitalization(.none)
+                                
+                                List(usedWords, id: \.self){
+                                    Image(systemName: "\($0.count).circle")
+                                    Text($0)
+                                }.colorMultiply(secondBackgroundColor)
+                                
+                            }
                             
                         }
-                        .padding()
-                        .autocapitalization(.none)
-                        
-                        
-                        
-                        
-                        List(usedWords, id: \.self){
-                            Image(systemName: "\($0.count).circle")
-                            Text($0)
-                        }
+                            
+                            
+                            
                             
                         .alert(isPresented: $showAlert) { () -> Alert in
                             Alert(title: Text(alertTitle), message: Text(alertMEssage))
@@ -78,46 +102,50 @@ struct ContentView: View {
                         
                     }
                 }
-                .navigationBarTitle(gameStarted == true ? rootWord : "")
-                .navigationBarItems(leading: HStack{
-                    if !pausedGame{
-                        Button(action: restartGame, label: {
-                            Text("START NEW GAME")
-                                .foregroundColor(.black)
-                                .bold()
-                            .underline()
-                            
-                        })
-                        
-                    }
-                    }, trailing: VStack {
-                        
+                    //MARK: - Bar buttons
+                    .navigationBarTitle(gameStarted == true ? rootWord : "")
+                    .navigationBarItems(leading: HStack{
                         if !pausedGame{
-                            HStack {
-                                Image(systemName: "\(String(points)).circle")
-                                    .resizable()
-                                    .frame(width: 60, height: 60)
-                                    .padding(.top, 50)
-                                    .padding(.trailing, 20)
+                            Button(action: restartGame, label: {
+                                Text("START NEW GAME")
+                                    .foregroundColor(.black)
+                                    .bold()
+                                    .underline()
                                 
-                            }
+                            })
+                            
                         }
-                        
-                })
+                        }, trailing: VStack {
+                            
+                            if !pausedGame{
+                                HStack {
+                                    Image(systemName: "\(String(points)).circle")
+                                        .resizable()
+                                        .frame(width: 60, height: 60)
+                                        .padding(.top, 50)
+                                        .padding(.trailing, 20)
+                                    
+                                }
+                            }
+                            
+                    })
             }
             
         }
             
-            
-        .alert(isPresented: $timeRanOut) { () -> Alert in
-            Alert(title: Text("Time Ran out"), message: Text("You ran out of time"), dismissButton: .default(Text("Play Again")){
-                self.restartGame()
-                })
+            //Alert for when timer runs out (it wont fire right now, nothing is firing it)
+            .alert(isPresented: $timeRanOut) { () -> Alert in
+                Alert(title: Text("Time Ran out"), message: Text("You ran out of time"), dismissButton: .default(Text("Play Again")){
+                    self.restartGame()
+                    })
         }
         
     }
     
-    //Checks whether or not the file is found and if its data can be read. Assigs all the values found inside the text file inside athe root word variable
+    
+    //MARK: - Functions
+    
+    //Checks whether or not the file is found and if its data can be read. Assigns all the values found inside the text file inside athe root word variable
     func readWord() -> (Bool){
         if let fileURL = Bundle.main.url(forResource: "start", withExtension: "txt"){
             if let fileContent = try? String(contentsOf: fileURL){
@@ -128,6 +156,7 @@ struct ContentView: View {
         return false
     }
     
+    //Restarts the game states, points etc
     func restartGame(){
         
         if readWord(){
@@ -140,6 +169,7 @@ struct ContentView: View {
         }
     }
     
+    //Checks if the word created is possible word
     func isPossible(word: String) -> Bool{
         var tempWord = rootWord
         
@@ -153,6 +183,7 @@ struct ContentView: View {
         return true
     }
     
+    //Checks if the created word makes sense
     func makesSense(word: String) -> (Bool) {
         let checker = UITextChecker()
         let range = NSRange(location: 0, length: word.utf16.count)
@@ -162,16 +193,18 @@ struct ContentView: View {
         return mispelledWords.location == NSNotFound ? true : false
     }
     
-    
+    //Checks if the word was already used in the list
     func isRepeated(word: String) -> (Bool){
         return usedWords.contains(word) ? true : false
     }
     
+    //Adds the word to the used list
     func addWord(word: String){
         usedWords.insert(word, at: 0)
     }
     
-    static func calculateRGB(red: Double, green : Double, blue : Double) -> ([Double]){
+    //Calculate color with rgb values
+    static func calculateRGB(red: Double, green : Double, blue : Double) -> Color{
         let total = 255.0
         
         var rgb : [Double] = []
@@ -188,9 +221,13 @@ struct ContentView: View {
         rgb.append(green / 100)
         rgb.append(blue / 100)
         
-        return rgb
+        let convertedColor = Color(red: rgb[0], green: rgb[1], blue: rgb[2])
+        
+        return convertedColor
     }
     
+    
+    //Validates the words provided by the user
     func validateInput (input: String) {
         
         if !self.isPossible(word: input){
