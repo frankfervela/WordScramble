@@ -29,7 +29,7 @@ struct ContentView: View {
     @State private var buttonBackground = calculateRGB(red: 235, green: 110, blue: 200)
     @State private var backgroundColor = calculateRGB(red: 235, green: 120, blue: 100)
     @State private var secondBackgroundColor = calculateRGB(red: 200, green: 130, blue: 200)
-    
+    @State private var animation : CGFloat = 0.5
     
     //MARK: - View
     var body: some View {
@@ -46,16 +46,17 @@ struct ContentView: View {
                                 .resizable()
                                 .frame(width: 250, height: 100, alignment: .center)
                                 .offset(y: -90)
-                                
+                            
                             
                             Button(action: {
                                 self.restartGame()
                                 self.pausedGame = false
+                                //self.animation += 0.1
                             }, label: {
                                 Text("Play 🥥")
                                     .frame(width: 200)
                                     .padding()
-                                    .font(.system(size: 40))
+                                    .font(.system(size: 30))
                                     .foregroundColor(.white)
                                     .background(buttonBackground)
                                     .clipShape(Capsule())
@@ -64,7 +65,9 @@ struct ContentView: View {
                                 
                             })
                                 .offset(y: 100)
-                        }
+//                                .scaleEffect(animation)
+//                                .animation(.default)
+                        }.animation(.easeOut)
                         
                         
                     }
@@ -82,6 +85,7 @@ struct ContentView: View {
                                 }
                                 .padding()
                                 .autocapitalization(.none)
+                                .keyboardType(.asciiCapable)
                                 
                                 List(usedWords, id: \.self){
                                     Image(systemName: "\($0.count).circle")
@@ -131,7 +135,7 @@ struct ContentView: View {
                     })
             }
             
-        }
+        }.animation(.easeIn)
             
             //Alert for when timer runs out (it wont fire right now, nothing is firing it)
             .alert(isPresented: $timeRanOut) { () -> Alert in
